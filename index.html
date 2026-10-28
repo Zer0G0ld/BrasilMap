@@ -2,23 +2,29 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Mapa do Brasil — Inspecionar</title>
+    <title>Mapa do Brasil — Inspetor GIS</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
     <div id="map"></div>
 
-    <!-- Painel lateral direito -->
     <aside id="inspector">
-        <div id="inspector-content">
-            <h2>🇧🇷 Brasil</h2>
-            <p class="hint">Carregando…</p>
+        <div id="inspector-header">
+            <button id="btn-voltar" class="btn-icon">←</button>
+            <h2 id="inspector-title">🇧🇷 Brasil</h2>
+            <button id="btn-menu" class="btn-icon">☰</button>
         </div>
-        <button id="btn-voltar" disabled>← Voltar</button>
+        
+        <div id="inspector-content"></div>
     </aside>
 
+    <!-- Leaflet core -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="script.js"></script>
+    <!-- Biblioteca para tirar print do mapa (PNG) -->
+    <script src="https://cdn.rawgit.com/mapbox/leaflet-image/gh-pages/leaflet-image.js"></script>
+    
+    <!-- Nosso módulo principal -->
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>

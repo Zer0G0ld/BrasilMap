@@ -1,139 +1,220 @@
-body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 
 #map {
     height: 100vh;
-    width: calc(100% - 340px);
-    background-color: #f4f1ea;
+    width: calc(100% - 380px);
+    background-color: #f8f9fa; 
 }
 
-/* ── Painel inspecionar ── */
+/* ── PAINEL INSPETOR ── */
 #inspector {
     position: fixed;
     top: 0; right: 0;
-    width: 340px;
+    width: 380px;
     height: 100vh;
     background: #1e2530;
     color: #e9eef5;
-    padding: 20px;
     box-sizing: border-box;
-    overflow: hidden;                 /* painel não scrolla */
-    box-shadow: -2px 0 10px rgba(0,0,0,.4);
-    display: flex;
-    flex-direction: column;           /* cabeçalho + conteúdo + rodapé */
-}
-
-#inspector h2 { margin-top: 0; font-size: 20px; }
-#inspector h2 .sub { color: #99a5b5; font-size: 14px; font-weight: normal; }
-#inspector h3 { margin: 12px 0 6px; font-size: 15px; color: #f4d03f; }
-#inspector p  { margin: 4px 0; font-size: 13px; line-height: 1.4; }
-#inspector .hint { color: #99a5b5; font-style: italic; }
-
-/* ── Conteúdo scrollável ── */
-#inspector-content {
-    flex: 1 1 auto;
+    box-shadow: -4px 0 15px rgba(0,0,0,.3);
     display: flex;
     flex-direction: column;
-    min-height: 0;                    /* necessário p/ flex scroll */
-    overflow: hidden;
+    z-index: 1000;
 }
 
-#inspector-content > h2,
-#inspector-content > h3,
-#inspector-content > p,
-#inspector-content > .busca { flex: 0 0 auto; }
-
-/* ── Busca ── */
-#inspector .busca {
-    width: 100%;
-    padding: 8px 10px;
-    margin: 6px 0 8px;
-    border-radius: 4px;
-    border: 1px solid #3a4657;
+/* Cabeçalho (Seta, Título, Menu) */
+#inspector-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #3a4657;
     background: #141a22;
-    color: #e9eef5;
-    font-size: 13px;
-    box-sizing: border-box;
-    outline: none;
 }
-#inspector .busca::placeholder { color: #6b7888; }
-#inspector .busca:focus { border-color: #f4d03f; }
 
-/* ── Lista scrollável ── */
-#inspector ul.lista-scroll {
-    list-style: none;
-    padding: 0;
+#inspector-title {
     margin: 0;
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;                 /* rolagem interna */
-    border-top: 1px solid #2c3e50;
-    padding-top: 6px;
+    font-size: 18px;
+    font-weight: 600;
+    flex: 1;
+    text-align: center;
 }
 
-/* Scrollbar fina */
-#inspector ul.lista-scroll::-webkit-scrollbar { width: 8px; }
-#inspector ul.lista-scroll::-webkit-scrollbar-track { background: #141a22; }
-#inspector ul.lista-scroll::-webkit-scrollbar-thumb { background: #3a4657; border-radius: 4px; }
-#inspector ul.lista-scroll::-webkit-scrollbar-thumb:hover { background: #55627a; }
-
-/* ── Itens da lista ── */
-#inspector li {
-    padding: 7px 9px;
+.btn-icon {
+    background: transparent;
+    border: none;
+    color: #f4d03f;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
     border-radius: 4px;
+    transition: background 0.2s;
+}
+.btn-icon:hover { background: #2c3e50; }
+
+/* Área de Conteúdo (onde as telas se alternam) */
+#inspector-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    position: relative;
+}
+
+/* ── TELAS (Views) ── */
+.view {
+    display: none;
+    animation: fadeIn 0.2s ease-in-out;
+}
+.view.active { display: block; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateX(10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Títulos e Textos */
+h3 { margin: 20px 0 10px; font-size: 13px; color: #f4d03f; text-transform: uppercase; letter-spacing: 1px; }
+.stats-grid { display: flex; gap: 10px; margin-bottom: 20px; }
+.stat-box {
+    flex: 1; background: #141a22; padding: 14px;
+    border-radius: 8px; display: flex; flex-direction: column;
+    align-items: center; border: 1px solid #3a4657;
+}
+.stat-box span { font-size: 11px; color: #99a5b5; text-transform: uppercase; margin-bottom: 4px; }
+.stat-box strong { font-size: 22px; color: #f4d03f; }
+
+/* Botões de Ação Rápida (Menu) */
+.menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+.btn-action {
+    background: #2c3e50;
+    border: 1px solid #3a4657;
+    color: #fff;
+    padding: 12px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 13px;
-    transition: background .15s, color .15s;
+    font-weight: 500;
+    text-align: left;
+    transition: all 0.2s;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
     gap: 8px;
 }
-#inspector li:hover { background: #2c3e50; }
-#inspector li.ativo {
-    background: #f4d03f;
-    color: #1e2530;
-    font-weight: bold;
-}
-#inspector li.ativo:hover { background: #e8c130; }
-#inspector li.vazio {
-    color: #99a5b5;
-    font-style: italic;
-    cursor: default;
-    justify-content: center;
-}
-#inspector li.vazio:hover { background: transparent; }
+.btn-action:hover { background: #3a4657; transform: translateY(-2px); }
+.btn-action .icon { font-size: 20px; }
 
-#inspector .badge {
-    background: #2c3e50;
-    color: #99a5b5;
-    font-size: 11px;
-    padding: 1px 6px;
-    border-radius: 10px;
-    font-weight: normal;
-}
-#inspector li.ativo .badge { background: #1e2530; color: #f4d03f; }
-
-/* ── Botão voltar FIXO no rodapé ── */
-#btn-voltar {
-    flex: 0 0 auto;
-    margin-top: 12px;
-    padding: 10px;
-    border: none; border-radius: 4px;
-    background: #2c3e50; color: #fff;
-    cursor: pointer;
+/* Dropdown de Estados */
+select.styled-select {
+    width: 100%;
+    padding: 12px;
+    background: #141a22;
+    color: #fff;
+    border: 1px solid #3a4657;
+    border-radius: 8px;
     font-size: 14px;
-    font-weight: 500;
-    transition: background .15s;
+    outline: none;
+    cursor: pointer;
+    margin-bottom: 15px;
 }
-#btn-voltar:hover:not(:disabled) { background: #3a4657; }
-#btn-voltar:disabled { opacity: .3; cursor: not-allowed; }
+select.styled-select:focus { border-color: #f4d03f; }
+select.styled-select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #0d1117;
+}
 
-/* ── Mapa cinza ── */
-.mapa-cinza { filter: grayscale(100%) opacity(0.5); }
+/* Color Picker (Seleção de Cores) */
+.color-picker-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #141a22;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid #3a4657;
+    margin-bottom: 10px;
+}
+.color-picker-group label { font-size: 14px; font-weight: 500; }
+input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+    width: 40px;
+    height: 30px;
+    border-radius: 4px;
+    cursor: pointer;
+    background: transparent;
+}
+input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+input[type="color"]::-webkit-color-swatch { border: 1px solid #fff; border-radius: 4px; }
 
+/* Tooltip MapChart */
 .tooltip-custom {
-    background-color: #2c3e50; color: white;
-    border: none; border-radius: 4px;
-    padding: 6px 10px; font-size: 13px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    background-color: #fff; color: #333;
+    border: 1px solid #ccc; border-radius: 4px;
+    padding: 6px 10px; font-size: 13px; font-weight: 600;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.leaflet-container { cursor: grab; } 
+.leaflet-container:active { cursor: grabbing; }
+
+/* ── Input de Busca ── */
+input.styled-select {
+    font-family: inherit;
+}
+input.styled-select::placeholder {
+    color: #6b7280;
+}
+
+/* ── Select múltiplo (lista) ── */
+select.styled-select[size] {
+    padding: 4px;
+    overflow-y: auto;
+}
+select.styled-select[size] option {
+    padding: 8px 10px;
+    border-radius: 4px;
+    margin-bottom: 2px;
+    cursor: pointer;
+}
+select.styled-select[size] option:checked {
+    background: #3a4657;
+    color: #f4d03f;
+}
+
+/* ── Botões em linha ── */
+.btn-action[style*="flex:1"] {
+    padding: 10px;
+    font-size: 12px;
+    align-items: center;
+    text-align: center;
+}
+.btn-action[style*="flex:1"] .icon {
+    font-size: 18px;
+}
+
+/* ── Barra de progresso ── */
+.progress-bar {
+    background: #0d1117;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.progress-bar-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+/* ── Animações de entrada ── */
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#inspector-content > * {
+    animation: slideIn 0.2s ease-out;
 }
