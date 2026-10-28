@@ -2,26 +2,23 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa Interativo - Livro Amarelo</title>
-    <!-- Importando o CSS do Leaflet (mapa) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Importando o nosso CSS -->
-    <link rel="stylesheet" href="style.css" />
+    <title>Mapa do Brasil — Inspecionar</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-
-    <!-- Onde o mapa vai aparecer -->
     <div id="map"></div>
 
-    <!-- Importando o JS do Leaflet -->
+    <!-- Painel lateral direito -->
+    <aside id="inspector">
+        <div id="inspector-content">
+            <h2>🇧🇷 Brasil</h2>
+            <p class="hint">Carregando…</p>
+        </div>
+        <button id="btn-voltar" disabled>← Voltar</button>
+    </aside>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <!-- Bibliotecas para renderização vetorial otimizada (versão corrigida) -->
-    <script src="https://unpkg.com/geojson-vt@3.2.0/geojson-vt.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/leaflet-geojson-vt@1.1.0/src/leaflet-geojson-vt.min.js"></script>
-
-    <!-- Importando o nosso JS -->
     <script src="script.js"></script>
 </body>
 </html>

@@ -2,67 +2,100 @@ import json
 import os
 from pathlib import Path
 
-# Configurações de pastas
 REPO_ROOT = Path(__file__).resolve().parent
 MINIFIED_DIR = REPO_ROOT / "minified"
 OUTPUT_FILE = REPO_ROOT / "brasil_completo.json"
 
-# Lista de todos os estados
 UFS = [
-    "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS",
-    "MT", "PA", "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC",
-    "SE", "SP", "TO"
+    "AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS",
+    "MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC",
+    "SE","SP","TO"
 ]
 
-def processar():
-    todas_as_features = []
+def bbox_from_coords(coords):
+    """Retorna [minLng, minLat, maxLng, maxLat] para Polygon/MultiPolygon."""
+    xs, ys = [], []
+    def walk(c):
+        if isinstance(c[0], (int, float)):
+            xs.append(c[0]); ys.append(c[1])
+        else:
+            for item in c: walk(item)
+    walk(coords)
+    return [min(xs), min(ys), max(xs), max(ys)]
 
-    print("Iniciando processamento dos estados...")
+def merge_bbox(a, b):
+    return [min(a[0], b[0]), min(a[1], b[1]), max(a[2], b[2]), max(a[3], b[3])]
+
+def processar():
+    municipios = []
+    estados_agg = {}   # uf -> { nome, uf, bbox, features: [] }
+    brasil_bbox = None
 
     for uf in UFS:
         file_path = MINIFIED_DIR / f"{uf}.min.json"
-        
         if not file_path.exists():
-            print(f"⚠️ Arquivo não encontrado: {file_path}")
+            print(f"⚠️  Falta: {file_path}")
             continue
 
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             data = json.load(f)
 
-        for feature in data['features']:
-            props = feature['properties']
-            
-            # Padroniza as propriedades para garantir que o JS encontre fácil
-            # Usamos .get() para evitar erros se a chave não existir
-            nome = props.get('NOME') or props.get('nome') or 'Desconhecido'
-            geocodigo = props.get('GEOCODIGO') or props.get('geocodigo') or ''
-            uf_sigla = props.get('UF') or props.get('uf') or uf
+        uf_bbox = None
+        uf_features = []
 
-            # Cria um novo objeto de propriedades limpo e padronizado
-            feature['properties'] = {
+        for feature in data["features"]:
+            props = feature["properties"]
+            nome = props.get("NOME") or props.get("nome") or "Desconhecido"
+            geocodigo = props.get("GEOCODIGO") or props.get("geocodigo") or ""
+            uf_sigla = props.get("UF") or props.get("uf") or uf
+
+            bbox = bbox_from_coords(feature["geometry"]["coordinates"])
+
+            feature["properties"] = {
                 "nome": nome,
                 "uf": uf_sigla,
-                "geocodigo": geocodigo
+                "geocodigo": geocodigo,
+                "bbox": bbox,   # 🎯 pré-calculado
             }
-            
-            todas_as_features.append(feature)
-        
-        print(f"✅ {uf}: {len(data['features'])} municípios processados.")
 
-    # Monta o GeoJSON final
+            uf_features.append(feature)
+            uf_bbox = bbox if uf_bbox is None else merge_bbox(uf_bbox, bbox)
+            brasil_bbox = bbox if brasil_bbox is None else merge_bbox(brasil_bbox, bbox)
+
+        estados_agg[uf] = {
+            "nome": uf,       # o nome completo do estado está no Brasil.min.json
+            "uf": uf,
+            "bbox": uf_bbox,
+            "total_municipios": len(uf_features),
+        }
+        municipios.extend(uf_features)
+        print(f"✅ {uf}: {len(uf_features)} municípios")
+
+    # Enriquecer com nomes de estado (lê Brasil.min.json se existir)
+    brasil_file = MINIFIED_DIR / "Brasil.min.json"
+    if brasil_file.exists():
+        with open(brasil_file, encoding="utf-8") as f:
+            br = json.load(f)
+        for feature in br["features"]:
+            p = feature["properties"]
+            sigla = p.get("SIGLA") or p.get("UF") or p.get("uf")
+            nome_estado = p.get("NOME") or p.get("nome")
+            if sigla in estados_agg and nome_estado:
+                estados_agg[sigla]["nome"] = nome_estado
+
     geojson_final = {
         "type": "FeatureCollection",
-        "features": todas_as_features
+        "brasil_bbox": brasil_bbox,
+        "estados": estados_agg,
+        "features": municipios,
     }
 
-    # Salva o arquivo final
-    print(f"\nSalvando arquivo final com {len(todas_as_features)} municípios...")
-    with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
-        # separators=(',', ':') remove espaços para deixar o arquivo menor
-        json.dump(geojson_final, f, ensure_ascii=False, separators=(',', ':'))
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+        json.dump(geojson_final, f, ensure_ascii=False, separators=(",", ":"))
 
-    print(f"🚀 Sucesso! Arquivo criado: {OUTPUT_FILE.name}")
-    print(f"📦 Tamanho do arquivo: {OUTPUT_FILE.stat().st_size / (1024*1024):.2f} MB")
+    print(f"\n🚀 Gerado: {OUTPUT_FILE.name}")
+    print(f"📦 {OUTPUT_FILE.stat().st_size/(1024*1024):.2f} MB")
+    print(f"🗺️  Bbox Brasil: {brasil_bbox}")
 
 if __name__ == "__main__":
     processar()
